@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AeroTemp // Advanced Weather Intelligence</title>
+  <meta name="description" content="A premium weather dashboard featuring real-time analytics, historical weather comparisons, and interactive data visualization.">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- Chart.js and Lucide Icons via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="theme-default">
+  <!-- Dynamic background blobs -->
+  <div class="bg-glow blob-1"></div>
+  <div class="bg-glow blob-2"></div>
+  <div class="bg-glow blob-3"></div>
+
+  <div class="app-container">
+    <!-- Sidebar: Saved Cities & Settings -->
+    <aside class="sidebar">
+      <div class="brand">
+        <i data-lucide="cloud-lightning" class="brand-icon"></i>
+        <h1>AeroTemp</h1>
+      </div>
+      
+      <div class="sidebar-section">
+        <div class="section-header">
+          <h3>Saved Locations</h3>
+          <span class="location-count" id="saved-count">0</span>
+        </div>
+        <div class="saved-cities-list" id="saved-cities">
+          <!-- Dynamically populated -->
+          <div class="empty-state">
+            <i data-lucide="map-pin"></i>
+            <p>No saved cities. Search and save one below!</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="sidebar-footer">
+        <div class="footer-buttons">
+          <button id="add-current-city" class="btn btn-secondary" title="Save current location">
+            <i data-lucide="bookmark-plus"></i> Save Location
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Top Navigation & Search -->
+      <header class="app-header">
+        <div class="search-container">
+          <div class="search-input-wrapper">
+            <i data-lucide="search" class="search-icon"></i>
+            <input type="text" id="search-input" placeholder="Search for cities worldwide..." autocomplete="off">
+            <button id="clear-search" class="clear-btn" style="display: none;">
+              <i data-lucide="x"></i>
+            </button>
+            <div class="search-spinner" id="search-spinner" style="display: none;"></div>
+          </div>
+          <!-- Auto-complete Dropdown -->
+          <div class="search-dropdown" id="search-dropdown" style="display: none;">
+            <!-- Dynamically populated list -->
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <!-- Metric / Imperial Toggle -->
+          <div class="unit-toggle-wrapper">
+            <span class="unit-label">Metric</span>
+            <label class="switch">
+              <input type="checkbox" id="unit-toggle">
+              <span class="slider round"></span>
+            </label>
+            <span class="unit-label">Imperial</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Dashboard Grid -->
+      <div class="dashboard-grid" id="weather-dashboard" style="display: none;">
+        
+        <!-- Row 1: Today's Summary & Core Metrics -->
+        <div class="grid-row row-hero">
+          <!-- Hero Weather Card -->
+          <div class="card card-hero glass">
+            <div class="hero-header">
+              <div class="location-info">
+                <h2 id="hero-city">New York</h2>
+                <p id="hero-country-region">United States, NY</p>
+              </div>
+              <span class="weather-pill" id="hero-condition-pill">Sunny</span>
+            </div>
+            
+            <div class="hero-body">
+              <div class="temp-display">
+                <span class="current-temp" id="hero-temp">24°C</span>
+                <span class="feels-like" id="hero-feels-like">Feels like 26°</span>
+              </div>
+              <div class="weather-icon-lg" id="hero-icon-container">
+                <!-- SVG Icon populated dynamically -->
+              </div>
+            </div>
+            
+            <div class="hero-footer">
+              <div class="high-low-range">
+                <span class="metric-min-max"><i data-lucide="arrow-down" class="txt-blue"></i> <span id="hero-temp-min">18°</span></span>
+                <span class="metric-min-max"><i data-lucide="arrow-up" class="txt-red"></i> <span id="hero-temp-max">28°</span></span>
+              </div>
+              <div class="last-updated">
+                Updated: <span id="hero-time">14:00</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Stats Grid -->
+          <div class="quick-stats-grid">
+            <!-- Humidity -->
+            <div class="card glass stat-card">
+              <div class="stat-icon-wrapper humidity">
+                <i data-lucide="droplets"></i>
+              </div>
+              <div class="stat-content">
+                <span class="stat-label">Humidity</span>
+                <span class="stat-value" id="stat-humidity">64%</span>
+              </div>
+            </div>
+            <!-- Wind -->
+            <div class="card glass stat-card">
+              <div class="stat-icon-wrapper wind">
+                <i data-lucide="wind"></i>
+              </div>
+              <div class="stat-content">
+                <span class="stat-label">Wind</span>
+                <span class="stat-value" id="stat-wind">12 km/h</span>
+                <span class="stat-sub" id="stat-wind-dir">ENE</span>
+              </div>
+            </div>
+            <!-- UV Index -->
+            <div class="card glass stat-card">
+              <div class="stat-icon-wrapper uv">
+                <i data-lucide="sun"></i>
+              </div>
+              <div class="stat-content">
+                <span class="stat-label">UV Index</span>
+                <span class="stat-value" id="stat-uv">5</span>
+                <span class="stat-badge badge-warning" id="stat-uv-badge">Moderate</span>
+              </div>
+            </div>
+            <!-- Air Quality -->
+            <div class="card glass stat-card">
+              <div class="stat-icon-wrapper aqi">
+                <i data-lucide="activity"></i>
+              </div>
+              <div class="stat-content">
+                <span class="stat-label">Air Quality (AQI)</span>
+                <span class="stat-value" id="stat-aqi">42</span>
+                <span class="stat-badge badge-success" id="stat-aqi-badge">Good</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 2: Hourly Forecast & Detailed Analytics Charts -->
+        <div class="grid-row row-split">
+          <!-- Hourly Forecast Card -->
+          <div class="card glass hourly-card">
+            <h3 class="card-title"><i data-lucide="clock"></i> 24-Hour Forecast</h3>
+            <div class="hourly-forecast-container" id="hourly-forecast">
+              <!-- Dynamically populated list of hours -->
+            </div>
+          </div>
+
+          <!-- Charts Card -->
+          <div class="card glass charts-card">
+            <div class="card-header-actions">
+              <h3 class="card-title"><i data-lucide="bar-chart-2"></i> Weather Analytics</h3>
+              <div class="chart-tabs">
+                <button class="chart-tab active" data-chart="temp">Temp</button>
+                <button class="chart-tab" data-chart="precip">Rain %</button>
+                <button class="chart-tab" data-chart="wind">Wind</button>
+              </div>
+            </div>
+            <div class="chart-container">
+              <canvas id="weatherChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 3: 7-Day Forecast & Premium Details Grid -->
+        <div class="grid-row row-details">
+          <!-- 7-Day Forecast -->
+          <div class="card glass daily-card">
+            <h3 class="card-title"><i data-lucide="calendar"></i> 7-Day Forecast</h3>
+            <div class="daily-forecast-container" id="daily-forecast">
+              <!-- Dynamically populated list of days -->
+            </div>
+          </div>
+
+          <!-- Advanced Environmental Metrics & Sun/Moon -->
+          <div class="card glass env-card">
+            <h3 class="card-title"><i data-lucide="sparkles"></i> Advanced Metrics</h3>
+            <div class="env-metrics-grid">
+              <!-- Sunrise/Sunset Arc -->
+              <div class="env-item sunrise-sunset">
+                <div class="env-icon"><i data-lucide="sunrise"></i></div>
+                <div class="env-info">
+                  <span class="env-label">Sunrise & Sunset</span>
+                  <div class="sun-times">
+                    <div>
+                      <span class="time-label">Sunrise</span>
+                      <span class="time-val" id="env-sunrise">06:02 AM</span>
+                    </div>
+                    <div>
+                      <span class="time-label">Sunset</span>
+                      <span class="time-val" id="env-sunset">08:14 PM</span>
+                    </div>
+                  </div>
+                  <div class="daylight-duration">
+                    Daylight Duration: <span id="env-daylight">14h 12m</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Air Quality Pollutants -->
+              <div class="env-item aqi-pollutants">
+                <span class="env-label">AQI Pollutants Breakdown</span>
+                <div class="pollutants-list">
+                  <div class="pollutant">
+                    <span class="pol-name">PM2.5</span>
+                    <span class="pol-val" id="pol-pm25">8.4 µg/m³</span>
+                  </div>
+                  <div class="pollutant">
+                    <span class="pol-name">PM10</span>
+                    <span class="pol-val" id="pol-pm10">12.1 µg/m³</span>
+                  </div>
+                  <div class="pollutant">
+                    <span class="pol-name">NO₂</span>
+                    <span class="pol-val" id="pol-no2">4.2 µg/m³</span>
+                  </div>
+                  <div class="pollutant">
+                    <span class="pol-name">O₃</span>
+                    <span class="pol-val" id="pol-o3">38.0 µg/m³</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Wind details & Compass -->
+              <div class="env-item wind-details">
+                <div class="compass-wrapper">
+                  <div class="compass">
+                    <div class="compass-arrow" id="compass-arrow"></div>
+                    <span class="cardinal north">N</span>
+                    <span class="cardinal east">E</span>
+                    <span class="cardinal south">S</span>
+                    <span class="cardinal west">W</span>
+                  </div>
+                </div>
+                <div class="env-info">
+                  <span class="env-label">Wind Metrics</span>
+                  <div class="wind-metric-row">
+                    <span class="val-lbl">Speed:</span>
+                    <span class="val-txt" id="env-wind-speed">12 km/h</span>
+                  </div>
+                  <div class="wind-metric-row">
+                    <span class="val-lbl">Direction:</span>
+                    <span class="val-txt" id="env-wind-direction">75° (ENE)</span>
+                  </div>
+                  <div class="wind-metric-row">
+                    <span class="val-lbl">Pressure:</span>
+                    <span class="val-txt" id="env-pressure">1013 hPa</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 4: Weather Time Machine (Historical Comparison) -->
+        <div class="grid-row row-time-machine">
+          <div class="card glass time-machine-card">
+            <div class="time-machine-header">
+              <div class="title-info">
+                <h3 class="card-title"><i data-lucide="history"></i> Weather Time Machine</h3>
+                <p class="subtitle">Explore and compare historical weather archives for this location back to 1940</p>
+              </div>
+              <div class="time-machine-controls">
+                <input type="date" id="history-date-input" min="1940-01-01">
+                <button id="search-history-btn" class="btn btn-primary">
+                  <i data-lucide="search"></i> Compare Date
+                </button>
+              </div>
+            </div>
+
+            <div class="time-machine-status" id="tm-status" style="display: none;">
+              <div class="spinner"></div>
+              <span>Searching climate archives...</span>
+            </div>
+
+            <div class="time-machine-results" id="tm-results" style="display: none;">
+              <!-- Left: Comparison Analytics Pill -->
+              <div class="tm-comparison-banner" id="tm-banner">
+                <i data-lucide="arrow-up-right" class="banner-icon"></i>
+                <div class="banner-text">
+                  <h4 id="tm-comparison-headline">It was 4.2°C warmer on this day in 1985</h4>
+                  <p id="tm-comparison-sub">Compared to today's temperature of <span class="today-ref-temp">24°C</span>.</p>
+                </div>
+              </div>
+
+              <!-- Right: Comparison Grid -->
+              <div class="tm-comparison-grid">
+                <!-- Historical Card -->
+                <div class="comparison-card hist-data">
+                  <div class="card-tag">Historical: <span id="tm-display-date">July 14, 1985</span></div>
+                  <div class="comp-temp-row">
+                    <span class="comp-temp" id="tm-hist-temp">28.2°C</span>
+                    <div class="comp-icon" id="tm-hist-icon">
+                      <!-- SVG icon -->
+                    </div>
+                  </div>
+                  <div class="comp-details">
+                    <div class="comp-detail-item">
+                      <span>Max Temp</span>
+                      <strong id="tm-hist-max">31.0°C</strong>
+                    </div>
+                    <div class="comp-detail-item">
+                      <span>Min Temp</span>
+                      <strong id="tm-hist-min">23.0°C</strong>
+                    </div>
+                    <div class="comp-detail-item">
+                      <span>Precipitation</span>
+                      <strong id="tm-hist-precip">0.0 mm</strong>
+                    </div>
+                    <div class="comp-detail-item">
+                      <span>Max Wind</span>
+                      <strong id="tm-hist-wind">14 km/h</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Today Card -->
+                <div class="comparison-card today-data">
+                  <div class="card-tag">Today (Current)</div>
+                  <div class="comp-temp-row">
+                    <span class="comp-temp" id="tm-today-temp">24.0°C</span>
+                    <div class="comp-icon" id="tm-today-icon">
+                      <!-- SVG icon -->
+                    </div>
+                  </div>
+                  <div class="comp-details">
+                    <div class="comp-detail-item">
+                      <span>Max Temp</span>
+                      <strong id="tm-today-max">28.0°C</strong>
+                    </div>
+                    <div class="comp-detail-item">
+                      <span>Min Temp</span>
+                      <strong id="tm-today-min">18.0°C</strong>
+                    </div>
+                    <div class="comp-detail-item">
+                      <span>Precipitation</span>
+                      <strong id="tm-today-precip">0.2 mm</strong>
+                    </div>
+                    <div class="comp-detail-item">
+                      <span>Max Wind</span>
+                      <strong id="tm-today-wind">12 km/h</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Landing Page / Loading / Error States -->
+      <div class="status-overlay" id="status-overlay">
+        <div class="status-content">
+          <div class="welcome-view" id="welcome-view">
+            <i data-lucide="cloud-sun" class="welcome-icon"></i>
+            <h2>Welcome to AeroTemp</h2>
+            <p>Search for a city above, or select a saved location from the sidebar to view current forecasts, hourly trends, air quality index, and historical weather comparisons.</p>
+            <div class="search-prompt">
+              <button id="find-me-btn" class="btn btn-primary">
+                <i data-lucide="navigation"></i> Use My Current Location
+              </button>
+            </div>
+          </div>
+
+          <div class="loading-view" id="loading-view" style="display: none;">
+            <div class="spinner-lg"></div>
+            <h3>Gathering Meteorological Data</h3>
+            <p>Fetching forecast, atmospheric quality levels, and visual assets...</p>
+          </div>
+
+          <div class="error-view" id="error-view" style="display: none;">
+            <i data-lucide="alert-triangle" class="error-icon"></i>
+            <h3>Unable to Retrieve Weather Data</h3>
+            <p id="error-message">We couldn't connect to the meteorological services. Please check your internet connection or search for another city.</p>
+            <button id="error-retry-btn" class="btn btn-secondary">Try Again</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- JavaScript App Logic -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>
