@@ -2,7 +2,6 @@
 
 AeroTemp is a premium, weather analytics and forecast application designed to showcase advanced front-end engineering, keyless API integrations, responsive data visualization, and interactive historical comparisons.
 
-![AeroTemp Dashboard Mockup](weather_dashboard_mockup.png)
 
 ## 🌟 Key Features
 
